@@ -1,0 +1,46 @@
+services:
+  xml-api:
+    image: xml-api-processor:latest
+    container_name: xml-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - /httpdocs/docker-xml/uploads:/uploads
+    restart: always
+    environment:
+      - DB_HOST=mysql-cfdi        # ← CORREGIDO: nombre del servicio
+      - DB_PORT=3306
+      - DB_USER=pruebasroot
+      - DB_PASSWORD=9?EPdhwuDf12zi*v
+      - DB_NAME=webservice2
+    depends_on:
+      mysql-cfdi:
+        condition: service_healthy   # ← ESPERA a que MySQL esté listo
+    networks:
+      - cfdi-network
+
+  mysql-cfdi:
+    image: mysql:8.0
+    container_name: mysql-cfdi
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - /httpdocs/docker-xml/data:/var/lib/mysql
+      - /httpdocs/docker-xml/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: 9?EPdhwuDf12zi*v
+      MYSQL_DATABASE: webservice2
+      MYSQL_USER: pruebasroot
+      MYSQL_PASSWORD: 9?EPdhwuDf12zi*v
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 5s
+      start_period: 30s
+    networks:
+      - cfdi-network
+
+networks:
+  cfdi-network:
+    driver: bridge
